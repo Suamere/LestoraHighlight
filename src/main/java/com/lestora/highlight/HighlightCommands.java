@@ -27,24 +27,24 @@ public class HighlightCommands {
         registerTorchOn(root);
         registerLightRadius(root);
         registerShowAllOutlines(root);
-        registerDebugTransparent(root);
+        //registerDebugTransparent(root);
         registerClearHighlights(root);
 
         event.getDispatcher().register(root);
     }
 
-    private static void registerDebugTransparent(LiteralArgumentBuilder<CommandSourceStack> root) {
-        root.then(Commands.literal("isTransparent")
-                        .executes(context -> {
-                            var player = Minecraft.getInstance().player;
-                            var level = player.level();
-                            var pos = player.blockPosition();
-                            var state = level.getBlockState(pos);
-                            System.err.println(pos + " isTransparent: " + HighlightMemory.isTransparent(level, state, pos, null));
-                            return 1;
-                        })
-        );
-    }
+//    private static void registerDebugTransparent(LiteralArgumentBuilder<CommandSourceStack> root) {
+//        root.then(Commands.literal("isTransparent")
+//                        .executes(context -> {
+//                            var player = Minecraft.getInstance().player;
+//                            var level = player.level();
+//                            var pos = player.blockPosition();
+//                            var state = level.getBlockState(pos);
+//                            System.err.println(pos + " isTransparent: " + HighlightMemory.isTransparent(level, state, pos, null));
+//                            return 1;
+//                        })
+//        );
+//    }
 
     private static void registerClearHighlights(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("clearHighlights")
@@ -56,7 +56,7 @@ public class HighlightCommands {
     }
 
     private static void registerTorchOn(LiteralArgumentBuilder<CommandSourceStack> root) {
-        root.then(Commands.literal("torchAlwaysOn")
+        root.then(Commands.literal("alwaysShowBoundaries")
                 .then(Commands.argument("enabled", BoolArgumentType.bool())
                         .executes(context -> {
                             boolean enabled = BoolArgumentType.getBool(context, "enabled");
@@ -74,7 +74,7 @@ public class HighlightCommands {
     }
 
     private static void registerLightRadius(LiteralArgumentBuilder<CommandSourceStack> root) {
-        root.then(Commands.literal("findLightRadius")
+        root.then(Commands.literal("lightSourceScanDistance")
                 .then(Commands.argument("radius", IntegerArgumentType.integer(5, 100))
                         .executes(context -> {
                             HighlightEvents.findLightRadius = IntegerArgumentType.getInteger(context, "radius");
@@ -88,10 +88,10 @@ public class HighlightCommands {
     }
 
     private static void registerShowAllOutlines(LiteralArgumentBuilder<CommandSourceStack> root) {
-        root.then(Commands.literal("showAllLightOutlines")
+        root.then(Commands.literal("meldBoundaries")
                 .then(Commands.argument("enabled", BoolArgumentType.bool())
                         .executes(context -> {
-                            HighlightEvents.showAllOutlines = BoolArgumentType.getBool(context, "enabled");
+                            HighlightEvents.showAllOutlines = !BoolArgumentType.getBool(context, "enabled");
                             var player = Minecraft.getInstance().player;
                             if (HighlightEvents.alwaysOnEnabled)
                                 HighlightEmitter.processLights(player.level(), player.blockPosition(), HighlightEvents.findLightRadius, HighlightEvents.showAllOutlines);
@@ -102,7 +102,7 @@ public class HighlightCommands {
     }
 
     private static void registerHighlightRadius(LiteralArgumentBuilder<CommandSourceStack> root) {
-        root.then(Commands.literal("highlightRadius")
+        root.then(Commands.literal("createSphere")
                 .then(Commands.argument("radius", DoubleArgumentType.doubleArg(0))
                         .executes(context -> {
                             double radius = DoubleArgumentType.getDouble(context, "radius");
