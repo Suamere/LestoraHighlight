@@ -5,7 +5,6 @@ import com.lestora.highlight.models.LightPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -14,11 +13,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HighlightEmitter {
     private static final Set<UUID> lightUUIDs = ConcurrentHashMap.newKeySet();
 
-    public static void processLights(Level level, BlockPos playerPos, int radius, boolean showAllOutlines) {
+    public static void processLights(Level level, BlockPos playerPos, int heldItemLightLevel, int radius, boolean showAllOutlines) {
         if (level == null) return;
-        var heldItemLightLevel = 14; // ToDo: When calling processLights, pass in the held item light level.  If 0, assume 14 for Torch
+        if (heldItemLightLevel <= 0) heldItemLightLevel = 14;
         removeLights();
-        List<LightPos> lightPositions = LightSourceFinder.findLightSourcesNearby2(level, playerPos, radius);
+        List<LightPos> lightPositions = LightSourceFinder.findLightSourcesNearby(level, playerPos, radius);
         for (var lightPos : lightPositions) {
             UUID lightUUID = UUID.nameUUIDFromBytes(
                     ("lightSource:" + lightPos.getBlockPos().getX() + ":" + lightPos.getBlockPos().getY() + ":" + lightPos.getBlockPos().getZ())

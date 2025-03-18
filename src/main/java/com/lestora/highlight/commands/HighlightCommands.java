@@ -1,6 +1,7 @@
 package com.lestora.highlight.commands;
 
 import com.lestora.highlight.core.HighlightEmitter;
+import com.lestora.highlight.core.PlayerHeldItem;
 import com.lestora.highlight.events.HighlightEvents;
 import com.lestora.highlight.core.HighlightMemory;
 import com.lestora.highlight.core.HighlightSphere;
@@ -54,7 +55,7 @@ public class HighlightCommands {
                             HighlightEvents.alwaysOnEnabled = enabled;
                             if (enabled){
                                 var player = Minecraft.getInstance().player;
-                                HighlightEmitter.processLights(player.level(), player.blockPosition(), HighlightEvents.findLightRadius, HighlightEvents.showAllOutlines);
+                                HighlightEmitter.processLights(player.level(), player.blockPosition(), PlayerHeldItem.getHeldLightLevel(player), HighlightEvents.findLightRadius, HighlightEvents.showAllOutlines);
                             } else {
                                 HighlightEmitter.removeLights();
                             }
@@ -71,7 +72,7 @@ public class HighlightCommands {
                             HighlightEvents.findLightRadius = IntegerArgumentType.getInteger(context, "radius");
                             var player = Minecraft.getInstance().player;
                             if (HighlightEvents.alwaysOnEnabled)
-                                HighlightEmitter.processLights(player.level(), player.blockPosition(), HighlightEvents.findLightRadius, HighlightEvents.showAllOutlines);
+                                HighlightEmitter.processLights(player.level(), player.blockPosition(), PlayerHeldItem.getHeldLightLevel(player), HighlightEvents.findLightRadius, HighlightEvents.showAllOutlines);
                             return 1;
                         })
                 )
@@ -85,7 +86,7 @@ public class HighlightCommands {
                             HighlightEvents.showAllOutlines = !BoolArgumentType.getBool(context, "enabled");
                             var player = Minecraft.getInstance().player;
                             if (HighlightEvents.alwaysOnEnabled)
-                                HighlightEmitter.processLights(player.level(), player.blockPosition(), HighlightEvents.findLightRadius, HighlightEvents.showAllOutlines);
+                                HighlightEmitter.processLights(player.level(), player.blockPosition(), PlayerHeldItem.getHeldLightLevel(player), HighlightEvents.findLightRadius, HighlightEvents.showAllOutlines);
                             return 1;
                         })
                 )

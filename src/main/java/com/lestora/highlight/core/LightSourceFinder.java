@@ -13,28 +13,28 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import java.util.*;
 
 public class LightSourceFinder {
-    public static List<LightPos> findLightSourcesNearby(Level level, BlockPos playerPos, int distance) {
-        List<LightPos> lightPositions;
-        int radiusSq = distance * distance;
-        lightPositions = new ArrayList<>();
-        for (int dx = -distance; dx <= distance; dx++) {
-            for (int dy = -distance; dy <= distance; dy++) {
-                for (int dz = -distance; dz <= distance; dz++) {
-                    if (dx * dx + dy * dy + dz * dz <= radiusSq) {
-                        BlockPos pos = playerPos.offset(dx, dy, dz);
-                        var blockState = level.getBlockState(pos);
-                        for (var rlEntry : LestoraConfig.getLightLevels().entrySet()) {
-                            if (blockSpecialReview(blockState, rlEntry.getKey())) {
-                                lightPositions.add(new LightPos(pos, rlEntry.getValue()));
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return lightPositions;
-    }
+//    public static List<LightPos> findLightSourcesNearby(Level level, BlockPos playerPos, int distance) {
+//        List<LightPos> lightPositions;
+//        int radiusSq = distance * distance;
+//        lightPositions = new ArrayList<>();
+//        for (int dx = -distance; dx <= distance; dx++) {
+//            for (int dy = -distance; dy <= distance; dy++) {
+//                for (int dz = -distance; dz <= distance; dz++) {
+//                    if (dx * dx + dy * dy + dz * dz <= radiusSq) {
+//                        BlockPos pos = playerPos.offset(dx, dy, dz);
+//                        var blockState = level.getBlockState(pos);
+//                        for (var rlEntry : LestoraConfig.getLightLevels().entrySet()) {
+//                            if (blockSpecialReview(blockState, rlEntry.getKey())) {
+//                                lightPositions.add(new LightPos(pos, rlEntry.getValue()));
+//                                break;
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return lightPositions;
+//    }
 
     private static boolean blockSpecialReview(BlockState blockState, RLAmount rl) {
         var block = blockState.getBlock();
@@ -50,7 +50,7 @@ public class LightSourceFinder {
     }
 
 
-    public static List<LightPos> findLightSourcesNearby2(Level level, BlockPos playerPos, int distance) {
+    public static List<LightPos> findLightSourcesNearby(Level level, BlockPos playerPos, int distance) {
         List<LightPos> lightPositions = new ArrayList<>();
         int radiusSq = distance * distance;
         Set<BlockPos> visited = new HashSet<>();

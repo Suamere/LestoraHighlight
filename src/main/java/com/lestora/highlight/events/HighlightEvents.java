@@ -3,6 +3,7 @@ package com.lestora.highlight.events;
 import com.lestora.highlight.core.HighlightEmitter;
 import com.lestora.highlight.core.HighlightMemory;
 import com.lestora.highlight.core.HighlightSphere;
+import com.lestora.highlight.core.PlayerHeldItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,7 +53,7 @@ public class HighlightEvents {
                         if (lastPos == null || !lastPos.equals(currentPos)) {
                             lastPlayerPositions.put(player.getUUID(), currentPos);
                             // Call your method to process lights; adjust the radius as needed.
-                            HighlightEmitter.processLights(player.level(), currentPos, findLightRadius, showAllOutlines);
+                            HighlightEmitter.processLights(player.level(), currentPos, PlayerHeldItem.getHeldLightLevel(player), findLightRadius, showAllOutlines);
                         }
                     }
                 }
@@ -81,7 +82,7 @@ public class HighlightEvents {
         if (player == null) return;
 
         if (isPlayerCrouchingKeyDown || alwaysOnEnabled)
-            HighlightEmitter.processLights(player.level(), player.blockPosition(), findLightRadius, showAllOutlines);
+            HighlightEmitter.processLights(player.level(), player.blockPosition(), PlayerHeldItem.getHeldLightLevel(player), findLightRadius, showAllOutlines);
         HighlightSphere config = HighlightSphere.getUserHighlightConfig(player.getUUID());
         if (config == null || !HighlightMemory.hasHighlights()) return;
 
@@ -116,7 +117,7 @@ public class HighlightEvents {
                     Minecraft.getInstance().execute(() -> {
                         var player = Minecraft.getInstance().player;
                         if (player.isCrouching()) {
-                            HighlightEmitter.processLights(player.level(), player.blockPosition(), findLightRadius, showAllOutlines);
+                            HighlightEmitter.processLights(player.level(), player.blockPosition(), PlayerHeldItem.getHeldLightLevel(player), findLightRadius, showAllOutlines);
                         }
                     });
                 }, 100, TimeUnit.MILLISECONDS);
