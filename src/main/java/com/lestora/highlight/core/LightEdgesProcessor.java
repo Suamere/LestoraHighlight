@@ -50,8 +50,9 @@ public class LightEdgesProcessor {
             } else if (currentLight == 1) {
                 var actualLight = level.getLightEngine().getLayerListener(LightLayer.BLOCK).getLightValue(currentPos);
                 if (actualLight == 0) {
-                    var uuid = UUID.nameUUIDFromBytes(("lightSource:" + currentPos.getX() + ":" + currentPos.getY() + ":" + currentPos.getZ()).getBytes(StandardCharsets.UTF_8));
-                    HighlightSphere.setHighlightCenterAndRadius(uuid, currentPos.getX(), currentPos.getY(), currentPos.getZ(), 0, HighlightColor.red(0.5f), level);
+                    //var lightUUID = UUID.nameUUIDFromBytes(("lightSource:" + currentPos.getX() + ":" + currentPos.getY() + ":" + currentPos.getZ()).getBytes(StandardCharsets.UTF_8));
+                    //HighlightEmitter.lightUUIDs.add(lightUUID);
+                    //HighlightSphere.setHighlightCenterAndRadius(lightUUID, currentPos.getX(), currentPos.getY(), currentPos.getZ(), 0, HighlightColor.red(0.5f), level);
                     System.err.println("Light Level 0 where 1 was expected, is your light level configuration right? " + currentPos);
                 }
                 else if (actualLight > 1 && !showAllOutlines){

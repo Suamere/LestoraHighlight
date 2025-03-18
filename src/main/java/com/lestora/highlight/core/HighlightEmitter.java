@@ -1,10 +1,13 @@
 package com.lestora.highlight.core;
 
+import com.lestora.highlight.helpers.HighlightEntry;
 import com.lestora.highlight.models.HighlightColor;
+import com.lestora.highlight.models.LightConfig;
 import com.lestora.highlight.models.LightPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.LightLayer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -13,18 +16,29 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HighlightEmitter {
     private static final Set<UUID> lightUUIDs = ConcurrentHashMap.newKeySet();
 
-    public static void processLights(Level level, BlockPos playerPos, int heldItemLightLevel, int radius, boolean showAllOutlines) {
-        if (level == null) return;
-        if (heldItemLightLevel <= 0) heldItemLightLevel = 14;
+    public static void processLights(Player player) {
         removeLights();
-        List<LightPos> lightPositions = LightSourceFinder.findLightSourcesNearby(level, playerPos, radius);
+
+        if (player.isCrouching()) {
+            if (!LightConfig.showWhenCrouching) return;
+        } else if (!LightConfig.showWhenStanding) return;
+
+        var level = player.level();
+        if (level == null) return;
+
+        var playerPos = player.blockPosition();
+
+        var heldItemLightLevel = PlayerHeldItem.getHeldLightLevel(player);
+        if (heldItemLightLevel <= 0) heldItemLightLevel = 14;
+
+        List<LightPos> lightPositions = LightSourceFinder.findLightSourcesNearby(level, playerPos, LightConfig.findLightRadius);
         for (var lightPos : lightPositions) {
             UUID lightUUID = UUID.nameUUIDFromBytes(
                     ("lightSource:" + lightPos.getBlockPos().getX() + ":" + lightPos.getBlockPos().getY() + ":" + lightPos.getBlockPos().getZ())
                             .getBytes(StandardCharsets.UTF_8)
             );
             lightUUIDs.add(lightUUID);
-            var edges = LightEdgesProcessor.findLightEdges(lightPos.getBlockPos(), lightPos.getAmount(), level, showAllOutlines);
+            var edges = LightEdgesProcessor.findLightEdges(lightPos.getBlockPos(), lightPos.getAmount(), level, LightConfig.showAllOutlines);
             for (var ll0 : edges.LightLevel0) {
                 HighlightMemory.add(lightUUID, ll0);
             }
@@ -43,8 +57,30 @@ public class HighlightEmitter {
             if (e25 != null) candidates.add(e25);
             if (w25 != null) candidates.add(w25);
             for (BlockPos candidate : candidates) {
-                UUID uuid = UUID.nameUUIDFromBytes(("suggestion:" + candidate.getX() + ":" + candidate.getY() + ":" + candidate.getZ()).getBytes(StandardCharsets.UTF_8));
-                HighlightSphere.setHighlightCenterAndRadius(uuid, candidate.getX(), candidate.getY(), candidate.getZ(), 0, HighlightColor.blue(0.5f), level);
+                UUID lightUUID2 = UUID.nameUUIDFromBytes(("radial:" + candidate.getX() + ":" + candidate.getY() + ":" + candidate.getZ()).getBytes(StandardCharsets.UTF_8));
+                lightUUIDs.add(lightUUID2);
+
+                var light = level.getLightEngine().getLayerListener(LightLayer.BLOCK).getLightValue(candidate);
+                if (light != 0) continue;
+
+                boolean nearbyLit = false;
+                for (int dx = -2; dx <= 2 && !nearbyLit; dx++) {
+                    for (int dy = -2; dy <= 2 && !nearbyLit; dy++) {
+                        for (int dz = -2; dz <= 2 && !nearbyLit; dz++) {
+                            if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) <= 2) {
+                                BlockPos neighbor = candidate.offset(dx, dy, dz);
+
+                                light = level.getLightEngine().getLayerListener(LightLayer.BLOCK).getLightValue(neighbor);
+                                if (light != 0) {
+                                    nearbyLit = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (nearbyLit) continue;
+
+                HighlightMemory.add(lightUUID2, HighlightEntry.Whole(candidate, HighlightColor.blue(0.5f)));
             }
         }
 
@@ -71,11 +107,12 @@ public class HighlightEmitter {
         }
 
         for (BlockPos suggestion : suggestionSet) {
-            UUID uuid = UUID.nameUUIDFromBytes(
+            UUID lightUUID = UUID.nameUUIDFromBytes(
                     ("suggestion:" + suggestion.getX() + ":" + suggestion.getY() + ":" + suggestion.getZ())
                             .getBytes(StandardCharsets.UTF_8)
             );
-            HighlightSphere.setHighlightCenterAndRadius(uuid, suggestion.getX(), suggestion.getY(), suggestion.getZ(), 0, HighlightColor.green(0.5f), level);
+            lightUUIDs.add(lightUUID);
+            HighlightMemory.add(lightUUID, HighlightEntry.Whole(suggestion, HighlightColor.green(0.5f)));
         }
     }
 

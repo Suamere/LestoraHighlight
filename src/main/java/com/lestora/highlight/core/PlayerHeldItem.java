@@ -11,7 +11,8 @@ public class PlayerHeldItem {
         if (!mainStack.isEmpty()) {
             ResourceLocation mainResource = ForgeRegistries.ITEMS.getKey(mainStack.getItem());
             if (mainResource != null) {
-                int mainLight = LestoraConfig.getLightLevel(mainResource, 0);
+                Integer mainLightObj = LestoraConfig.getLightLevel(mainResource, 0);
+                int mainLight = (mainLightObj != null ? mainLightObj : 0);
                 if (mainLight > 0) {
                     return mainLight;
                 }
@@ -22,7 +23,8 @@ public class PlayerHeldItem {
         if (!offStack.isEmpty()) {
             ResourceLocation offResource = ForgeRegistries.ITEMS.getKey(offStack.getItem());
             if (offResource != null) {
-                int offLight = LestoraConfig.getLightLevel(offResource, 0);
+                Integer offLightObj = LestoraConfig.getLightLevel(offResource, 0);
+                int offLight = (offLightObj != null ? offLightObj : 0);
                 if (offLight > 0) {
                     return offLight;
                 }

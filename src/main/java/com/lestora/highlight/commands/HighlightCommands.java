@@ -6,6 +6,7 @@ import com.lestora.highlight.events.HighlightEvents;
 import com.lestora.highlight.core.HighlightMemory;
 import com.lestora.highlight.core.HighlightSphere;
 import com.lestora.highlight.models.HighlightColor;
+import com.lestora.highlight.models.LightConfig;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -30,7 +31,8 @@ public class HighlightCommands {
         var root = Commands.literal("lestora");
 
         registerHighlightRadius(root);
-        registerTorchOn(root);
+        registerStandLights(root);
+        registerCrouchLights(root);
         registerLightRadius(root);
         registerShowAllOutlines(root);
         registerClearHighlights(root);
@@ -47,48 +49,79 @@ public class HighlightCommands {
         );
     }
 
-    private static void registerTorchOn(LiteralArgumentBuilder<CommandSourceStack> root) {
-        root.then(Commands.literal("alwaysShowBoundaries")
-                .then(Commands.argument("enabled", BoolArgumentType.bool())
+    private static void registerStandLights(LiteralArgumentBuilder<CommandSourceStack> root) {
+        root.then(Commands.literal("lights")
+                .then(Commands.literal("showWhenStanding")
+                        // Default branch: omitted argument means true.
                         .executes(context -> {
-                            boolean enabled = BoolArgumentType.getBool(context, "enabled");
-                            HighlightEvents.alwaysOnEnabled = enabled;
-                            if (enabled){
-                                var player = Minecraft.getInstance().player;
-                                HighlightEmitter.processLights(player.level(), player.blockPosition(), PlayerHeldItem.getHeldLightLevel(player), HighlightEvents.findLightRadius, HighlightEvents.showAllOutlines);
-                            } else {
-                                HighlightEmitter.removeLights();
-                            }
+                            LightConfig.showWhenStanding = true;
+                            HighlightEmitter.processLights(Minecraft.getInstance().player);
                             return 1;
                         })
+                        // Optional argument branch.
+                        .then(Commands.argument("enabled", BoolArgumentType.bool())
+                                .executes(context -> {
+                                    LightConfig.showWhenStanding = BoolArgumentType.getBool(context, "enabled");
+                                    HighlightEmitter.processLights(Minecraft.getInstance().player);
+                                    return 1;
+                                })
+                        )
                 )
         );
     }
 
-    private static void registerLightRadius(LiteralArgumentBuilder<CommandSourceStack> root) {
-        root.then(Commands.literal("lightSourceScanDistance")
-                .then(Commands.argument("radius", IntegerArgumentType.integer(5, 100))
+    private static void registerCrouchLights(LiteralArgumentBuilder<CommandSourceStack> root) {
+        root.then(Commands.literal("lights")
+                .then(Commands.literal("showWhenCrouching")
+                        // Default branch: omitted argument means true.
                         .executes(context -> {
-                            HighlightEvents.findLightRadius = IntegerArgumentType.getInteger(context, "radius");
-                            var player = Minecraft.getInstance().player;
-                            if (HighlightEvents.alwaysOnEnabled)
-                                HighlightEmitter.processLights(player.level(), player.blockPosition(), PlayerHeldItem.getHeldLightLevel(player), HighlightEvents.findLightRadius, HighlightEvents.showAllOutlines);
+                            LightConfig.showWhenCrouching = true;
+                            HighlightEmitter.processLights(Minecraft.getInstance().player);
                             return 1;
                         })
+                        // Optional argument branch.
+                        .then(Commands.argument("enabled", BoolArgumentType.bool())
+                                .executes(context -> {
+                                    LightConfig.showWhenCrouching = BoolArgumentType.getBool(context, "enabled");
+                                    HighlightEmitter.processLights(Minecraft.getInstance().player);
+                                    return 1;
+                                })
+                        )
                 )
         );
     }
 
     private static void registerShowAllOutlines(LiteralArgumentBuilder<CommandSourceStack> root) {
-        root.then(Commands.literal("meldBoundaries")
-                .then(Commands.argument("enabled", BoolArgumentType.bool())
+        root.then(Commands.literal("lights")
+                .then(Commands.literal("showAllBoundaries")
+                        // Default branch: omitted argument means true.
                         .executes(context -> {
-                            HighlightEvents.showAllOutlines = !BoolArgumentType.getBool(context, "enabled");
-                            var player = Minecraft.getInstance().player;
-                            if (HighlightEvents.alwaysOnEnabled)
-                                HighlightEmitter.processLights(player.level(), player.blockPosition(), PlayerHeldItem.getHeldLightLevel(player), HighlightEvents.findLightRadius, HighlightEvents.showAllOutlines);
+                            LightConfig.showAllOutlines = true;
+                            HighlightEmitter.processLights(Minecraft.getInstance().player);
                             return 1;
                         })
+                        // Optional argument branch.
+                        .then(Commands.argument("enabled", BoolArgumentType.bool())
+                                .executes(context -> {
+                                    LightConfig.showAllOutlines = BoolArgumentType.getBool(context, "enabled");
+                                    HighlightEmitter.processLights(Minecraft.getInstance().player);
+                                    return 1;
+                                })
+                        )
+                )
+        );
+    }
+
+    private static void registerLightRadius(LiteralArgumentBuilder<CommandSourceStack> root) {
+        root.then(Commands.literal("lights")
+                .then(Commands.literal("scanDistance")
+                        .then(Commands.argument("radius", IntegerArgumentType.integer(5, 100))
+                                .executes(context -> {
+                                    LightConfig.findLightRadius = IntegerArgumentType.getInteger(context, "radius");
+                                    HighlightEmitter.processLights(Minecraft.getInstance().player);
+                                    return 1;
+                                })
+                        )
                 )
         );
     }
