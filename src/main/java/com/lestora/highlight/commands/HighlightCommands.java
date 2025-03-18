@@ -1,8 +1,6 @@
 package com.lestora.highlight.commands;
 
 import com.lestora.highlight.core.HighlightEmitter;
-import com.lestora.highlight.core.PlayerHeldItem;
-import com.lestora.highlight.events.HighlightEvents;
 import com.lestora.highlight.core.HighlightMemory;
 import com.lestora.highlight.core.HighlightSphere;
 import com.lestora.highlight.models.HighlightColor;
@@ -36,6 +34,7 @@ public class HighlightCommands {
         registerLightRadius(root);
         registerShowAllOutlines(root);
         registerClearHighlights(root);
+        registerUpdateOnMove(root);
 
         event.getDispatcher().register(root);
     }
@@ -46,6 +45,20 @@ public class HighlightCommands {
                     HighlightMemory.clear();
                     return 1;
                 })
+        );
+    }
+
+    private static void registerUpdateOnMove(LiteralArgumentBuilder<CommandSourceStack> root) {
+        root.then(Commands.literal("lights")
+                .then(Commands.literal("updateFrequency")
+                        .then(Commands.argument("seconds", IntegerArgumentType.integer(1, 100))
+                                .executes(context -> {
+                                    LightConfig.updateSeconds = IntegerArgumentType.getInteger(context, "seconds");
+                                    HighlightEmitter.processLights(Minecraft.getInstance().player);
+                                    return 1;
+                                })
+                        )
+                )
         );
     }
 

@@ -3,7 +3,6 @@ package com.lestora.highlight.events;
 import com.lestora.highlight.core.HighlightEmitter;
 import com.lestora.highlight.core.HighlightMemory;
 import com.lestora.highlight.core.HighlightSphere;
-import com.lestora.highlight.core.PlayerHeldItem;
 import com.lestora.highlight.models.LightConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -35,11 +34,10 @@ public class HighlightEvents {
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
-        // Only process at the end of a tick.
         if (event.phase == TickEvent.Phase.END) {
             tickCounter++;
             // Every 40 ticks (about 2 seconds)
-            if (tickCounter % 40 == 0) {
+            if (tickCounter % (LightConfig.updateSeconds * 20) == 0) {
                 // Iterate over all server players
                 for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
                     BlockPos currentPos = player.blockPosition();

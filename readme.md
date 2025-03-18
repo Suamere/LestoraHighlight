@@ -13,9 +13,12 @@ The highlight mod is meant to highlight particular blocks.  It does this for two
 
 ## Commands
 - Use the command `/lestora createSphere <radius>` to highlight a spherical area of breakable blocks from your current location.
-- Use the command `/lestora meldBoundaries [true/false]` Default true, set to false to show all boundaries of all torches.  It's not pretty, but good for debugging.
-- Use the command `/lestora lightSourceScanDistance <radius 5-100>` Default 41.  The distance around the player to scan for light sources for which to draw boundaries.
 - Use the command `/lestora clearHighlights` For debug, especially early in development.  Clears whole-block highlights like torch suggestions and spherical highlights.
+- Use the command `/lestora lights showAllBoundaries [true/false]` Default true, set to false to show all boundaries of all torches.  It's not pretty, but good for debugging.
+- Use the command `/lestora lights scanDistance <radius 5-100>` Default 41.  The distance around the player to scan for light sources for which to draw boundaries.
+- Use the command `/lestora lights updateFrequency <radius 1-100>` Default 2.  Every "how many seconds" the light area will be re-mapped, assuming you're moving in and out of range of other light sources.
+- Use the command `/lestora lights showWhenStanding [true/false]` Default false.  Will show the calculated light area while just walking around (updates at updateFrequency above)
+- Use the command `/lestora lights showWhenCrouching [true/false]` Default true.  Will show the calculated light area while crouching.
 
 ## Compatibility
 - **Minecraft Version:** 1.21.4

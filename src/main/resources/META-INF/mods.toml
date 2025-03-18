@@ -13,7 +13,7 @@ description='''${mod_description}'''
 [[dependencies.lestora_config]]
 modId="lestora_config"
 mandatory=true
-versionRange="[1.1.1,)"
+versionRange="[1.1.2,)"
 ordering="NONE"
 side="BOTH"
 

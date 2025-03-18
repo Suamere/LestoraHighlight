@@ -1,14 +1,11 @@
 package com.lestora.highlight.core;
 
 import com.lestora.config.LestoraConfig;
-import com.lestora.config.RLAmount;
 import com.lestora.highlight.models.LightPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.SeaPickleBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
 import java.util.*;
 
@@ -36,20 +33,6 @@ public class LightSourceFinder {
 //        return lightPositions;
 //    }
 
-    private static boolean blockSpecialReview(BlockState blockState, RLAmount rl) {
-        var block = blockState.getBlock();
-        if (block != rl.getBlockType()) return false;
-        if (rl.getAmount() == 0) return true;
-
-        // ToDo: Finish this for all "lit", count, and special cases
-        if (block instanceof SeaPickleBlock && rl.getBlockType() == block) {
-            if (blockState.getValue(BlockStateProperties.WATERLOGGED))
-                return rl.getAmount() == blockState.getValue(SeaPickleBlock.PICKLES);
-        }
-        return false;
-    }
-
-
     public static List<LightPos> findLightSourcesNearby(Level level, BlockPos playerPos, int distance) {
         List<LightPos> lightPositions = new ArrayList<>();
         int radiusSq = distance * distance;
@@ -67,7 +50,7 @@ public class LightSourceFinder {
             // Check if current block is a light source.
             BlockState state = level.getBlockState(currentPos);
             for (var entry : LestoraConfig.getLightLevels().entrySet()) {
-                if (blockSpecialReview(state, entry.getKey())) {
+                if (entry.getKey().stateMatches(state)) {
                     lightPositions.add(new LightPos(currentPos, entry.getValue()));
                     break;
                 }
