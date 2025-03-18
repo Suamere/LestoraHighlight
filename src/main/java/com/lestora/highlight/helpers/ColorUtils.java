@@ -1,5 +1,6 @@
-package com.lestora.highlight;
+package com.lestora.highlight.helpers;
 
+import com.lestora.highlight.models.HighlightColor;
 import net.minecraft.core.BlockPos;
 
 import java.util.UUID;

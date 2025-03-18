@@ -1,5 +1,7 @@
-package com.lestora.highlight;
+package com.lestora.highlight.core;
 
+import com.lestora.highlight.helpers.HighlightEntry;
+import com.lestora.highlight.models.HighlightColor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;

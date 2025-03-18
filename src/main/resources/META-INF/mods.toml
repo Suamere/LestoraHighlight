@@ -10,6 +10,13 @@ displayName="${mod_name}" #mandatory
 authors="${mod_authors}" #optional
 description='''${mod_description}'''
 
+[[dependencies.lestora_config]]
+modId="lestora_config"
+mandatory=true
+versionRange="[1.1.1,)"
+ordering="NONE"
+side="BOTH"
+
 [[dependencies.${mod_id}]]
     modId="forge"
     mandatory=true

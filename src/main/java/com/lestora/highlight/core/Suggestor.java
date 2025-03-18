@@ -1,7 +1,8 @@
-package com.lestora.highlight;
+package com.lestora.highlight.core;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class Suggestor {
@@ -36,15 +37,24 @@ public class Suggestor {
      * @param level the world level for block state queries
      * @return an array of two BlockPos: [leftCandidate, rightCandidate] (each may be null if not found)
      */
-    public static BlockPos[] suggestThirdTorches(BlockPos t1, BlockPos t2, Level level) {
-        // Compute midpoint
-        int midX = (t1.getX() + t2.getX()) / 2;
-        int midY = (t1.getY() + t2.getY()) / 2;
-        int midZ = (t1.getZ() + t2.getZ()) / 2;
-        BlockPos midpoint = new BlockPos(midX, midY, midZ);
+    public static BlockPos[] suggestThirdTorches(
+            BlockPos t1, BlockPos t2,
+            int torch1LightLevel, int torch2LightLevel, int suggestedThirdLightLevel,
+            Level level) {
+        int gap = manhattanDistance(t1, t2);
+        int effectiveRadius1 = torch1LightLevel - 1;
+        int effectiveRadius2 = torch2LightLevel - 1;
+        int effectiveRadius3 = suggestedThirdLightLevel - 1;
 
-        // Define search bounds: extend around the two torches.
-        int margin = 25;
+        if (gap > effectiveRadius1 + effectiveRadius2 + effectiveRadius3) {
+            // The torches are too far apart to be bridged by a third torch.
+            return new BlockPos[]{ null, null };
+        }
+
+        // Use the maximum light level from t1 and t2 to define our search bounds.
+        int maxTorchLight = Math.max(torch1LightLevel, torch2LightLevel);
+        int margin = (maxTorchLight * 2) + 1;
+
         int minX = Math.min(t1.getX(), t2.getX()) - margin;
         int maxX = Math.max(t1.getX(), t2.getX()) + margin;
         int minY = Math.min(t1.getY(), t2.getY()) - margin;
@@ -52,11 +62,16 @@ public class Suggestor {
         int minZ = Math.min(t1.getZ(), t2.getZ()) - margin;
         int maxZ = Math.max(t1.getZ(), t2.getZ()) + margin;
 
-        // Pass 1: Find the "dark spot" between the two torches.
-        // Light from a torch at Manhattan distance d is: max(14 - d, 0)
+        // Geometric midpoint for tie-breaking.
+        int midX = (t1.getX() + t2.getX()) / 2;
+        int midY = (t1.getY() + t2.getY()) / 2;
+        int midZ = (t1.getZ() + t2.getZ()) / 2;
+        BlockPos midpoint = new BlockPos(midX, midY, midZ);
+
+        // Pass 1: Find the "dark spot" based on each torch's light contribution.
+        // Light from a torch is: max(torchLightLevel - ManhattanDistance, 0)
         int bestEffective = Integer.MAX_VALUE;
         BlockPos darkSpot = null;
-
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
@@ -65,8 +80,8 @@ public class Suggestor {
 
                     int d1 = manhattanDistance(pos, t1);
                     int d2 = manhattanDistance(pos, t2);
-                    int l1 = Math.max(14 - d1, 0);
-                    int l2 = Math.max(14 - d2, 0);
+                    int l1 = Math.max(torch1LightLevel - d1, 0);
+                    int l2 = Math.max(torch2LightLevel - d2, 0);
                     int effective = Math.max(l1, l2);
 
                     if (effective < bestEffective) {
@@ -85,11 +100,12 @@ public class Suggestor {
             return new BlockPos[] { null, null };
         }
 
-        // Pre-compute the 2D vector for the line from t1 to t2 (x, z only)
+        // Pre-compute 2D vector from t1 to t2 (x, z only) for left/right determination.
         int diffX = t2.getX() - t1.getX();
         int diffZ = t2.getZ() - t1.getZ();
 
-        // Pass 2: Find candidate positions for the third torches.
+        // Pass 2: Find candidate positions for the third torch.
+        // We'll only consider positions that are within range of the dark spot, based on the suggestedThirdLightLevel.
         BlockPos bestLeft = null;
         int bestLeftCoverage = -1;
         BlockPos bestRight = null;
@@ -101,20 +117,40 @@ public class Suggestor {
                     BlockPos pos = new BlockPos(x, y, z);
                     if (!isValidTorchPlacement(level, pos)) continue;
 
+                    var light = level.getLightEngine().getLayerListener(LightLayer.BLOCK).getLightValue(pos);
+                    if (light != 0) continue;
+
+                    boolean nearbyLit = false;
+                    for (int dx = -2; dx <= 2 && !nearbyLit; dx++) {
+                        for (int dy = -2; dy <= 2 && !nearbyLit; dy++) {
+                            for (int dz = -2; dz <= 2 && !nearbyLit; dz++) {
+                                if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) <= 2) {
+                                    BlockPos neighbor = pos.offset(dx, dy, dz);
+
+                                    light = level.getLightEngine().getLayerListener(LightLayer.BLOCK).getLightValue(neighbor);
+                                    if (light != 0) {
+                                        nearbyLit = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (nearbyLit) continue;
+
                     int d1 = manhattanDistance(pos, t1);
                     int d2 = manhattanDistance(pos, t2);
-                    if (d1 > 25 || d2 > 25) continue;
+                    if (d1 > margin || d2 > margin) continue;
 
-                    if (manhattanDistance(pos, darkSpot) > 13) continue;
+                    // Ensure the candidate is close enough so that a torch with suggestedThirdLightLevel can light the dark spot.
+                    if (manhattanDistance(pos, darkSpot) > suggestedThirdLightLevel - 1) continue;
 
                     int coverage = d1 + d2;
 
-                    // Determine left/right using cross product (2D, using x and z).
+                    // Determine left/right using a 2D cross product (x and z coordinates).
                     int candDX = pos.getX() - darkSpot.getX();
                     int candDZ = pos.getZ() - darkSpot.getZ();
                     int cross = diffX * candDZ - diffZ * candDX;
 
-                    // For left side (cross > 0)
                     if (cross > 0) {
                         if (coverage > bestLeftCoverage) {
                             bestLeftCoverage = coverage;
@@ -124,9 +160,7 @@ public class Suggestor {
                                 bestLeft = pos;
                             }
                         }
-                    }
-                    // For right side (cross < 0)
-                    else if (cross < 0) {
+                    } else if (cross < 0) {
                         if (coverage > bestRightCoverage) {
                             bestRightCoverage = coverage;
                             bestRight = pos;
@@ -142,4 +176,5 @@ public class Suggestor {
 
         return new BlockPos[] { bestLeft, bestRight };
     }
+
 }

@@ -1,8 +1,10 @@
-package com.lestora.highlight;
+package com.lestora.highlight.helpers;
 
+import com.lestora.highlight.models.HighlightColor;
+import com.lestora.highlight.models.HighlightCorner;
+import com.lestora.highlight.models.HighlightFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import org.openjdk.nashorn.internal.ir.LexicalContext;
 
 
 public class HighlightEntry {

@@ -1,8 +1,11 @@
-package com.lestora.highlight;
+package com.lestora.highlight.core;
 
+import com.lestora.highlight.models.HighlightColor;
+import com.lestora.highlight.models.LightPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -11,10 +14,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HighlightEmitter {
     private static final Set<UUID> lightUUIDs = ConcurrentHashMap.newKeySet();
 
-    public static void processLights(Level level, BlockPos center, int radius, boolean showAllOutlines) {
+    public static void processLights(Level level, BlockPos playerPos, int radius, boolean showAllOutlines) {
         if (level == null) return;
+        var heldItemLightLevel = 14; // ToDo: When calling processLights, pass in the held item light level.  If 0, assume 14 for Torch
         removeLights();
-        List<LightPos> lightPositions = LightSourceFinder.findLightSourcesNearby(level, center, radius);
+        List<LightPos> lightPositions = LightSourceFinder.findLightSourcesNearby2(level, playerPos, radius);
         for (var lightPos : lightPositions) {
             UUID lightUUID = UUID.nameUUIDFromBytes(
                     ("lightSource:" + lightPos.getBlockPos().getX() + ":" + lightPos.getBlockPos().getY() + ":" + lightPos.getBlockPos().getZ())
@@ -29,10 +33,11 @@ public class HighlightEmitter {
                 HighlightMemory.add(lightUUID, ll1);
             }
 
-            var n25 = TorchBFS.bfsBestCandidateSingleDirection(lightPos.getBlockPos(), level, 25, Direction.NORTH);
-            var s25 = TorchBFS.bfsBestCandidateSingleDirection(lightPos.getBlockPos(), level, 25, Direction.SOUTH);
-            var e25 = TorchBFS.bfsBestCandidateSingleDirection(lightPos.getBlockPos(), level, 25, Direction.EAST);
-            var w25 = TorchBFS.bfsBestCandidateSingleDirection(lightPos.getBlockPos(), level, 25, Direction.WEST);
+            var radius2 = ((lightPos.getAmount() - 1) * 2) - 1;
+            var n25 = TorchBFS.bfsBestCandidateSingleDirection(lightPos.getBlockPos(), level, radius2, Direction.NORTH);
+            var s25 = TorchBFS.bfsBestCandidateSingleDirection(lightPos.getBlockPos(), level, radius2, Direction.SOUTH);
+            var e25 = TorchBFS.bfsBestCandidateSingleDirection(lightPos.getBlockPos(), level, radius2, Direction.EAST);
+            var w25 = TorchBFS.bfsBestCandidateSingleDirection(lightPos.getBlockPos(), level, radius2, Direction.WEST);
             List<BlockPos> candidates = new ArrayList<>();
             if (n25 != null) candidates.add(n25);
             if (s25 != null) candidates.add(s25);
@@ -45,13 +50,15 @@ public class HighlightEmitter {
         }
 
         Set<BlockPos> suggestionSet = new HashSet<>();
-
         if (lightPositions.size() >= 2) {
             for (int i = 0; i < lightPositions.size(); i++) {
                 for (int j = i + 1; j < lightPositions.size(); j++) {
                     BlockPos[] suggestions = Suggestor.suggestThirdTorches(
                             lightPositions.get(i).getBlockPos(),
                             lightPositions.get(j).getBlockPos(),
+                            lightPositions.get(i).getAmount(),
+                            lightPositions.get(j).getAmount(),
+                            heldItemLightLevel,
                             level
                     );
                     if (suggestions[0] != null) {

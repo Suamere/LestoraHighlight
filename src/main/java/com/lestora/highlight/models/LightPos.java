@@ -1,4 +1,4 @@
-package com.lestora.highlight;
+package com.lestora.highlight.models;
 
 import net.minecraft.core.BlockPos;
 

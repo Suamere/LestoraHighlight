@@ -1,5 +1,8 @@
-package com.lestora.highlight;
+package com.lestora.highlight.events;
 
+import com.lestora.highlight.core.HighlightEmitter;
+import com.lestora.highlight.core.HighlightMemory;
+import com.lestora.highlight.core.HighlightSphere;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;

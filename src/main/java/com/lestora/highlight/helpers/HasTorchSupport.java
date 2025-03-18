@@ -1,14 +1,21 @@
-package com.lestora.highlight;
+package com.lestora.highlight.helpers;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 
 public class HasTorchSupport {
+    /**
+     * Checks if the candidate position has support for a torch.
+     * Uses isFaceSturdy: the block below must be sturdy on its UP face,
+     * or one of the horizontal neighbors must be sturdy on its facing side.
+     *
+     * @param level The world Level.
+     * @param pos   The candidate BlockPos.
+     * @return true if support exists.
+     */
     public static boolean hasSupport(Level level, BlockPos pos) {
-        BlockState below = level.getBlockState(pos.below());
-        if (below.isFaceSturdy(level, pos.below(), Direction.UP)) {
+        if (level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) {
             return true;
         }
         if (level.getBlockState(pos.north()).isFaceSturdy(level, pos.north(), Direction.SOUTH)) {

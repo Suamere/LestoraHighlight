@@ -1,13 +1,12 @@
-package com.lestora.highlight;
+package com.lestora.highlight.core;
 
+import com.lestora.highlight.helpers.HighlightEntry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
-import net.minecraft.world.level.block.StainedGlassBlock;
-import net.minecraft.world.level.block.StainedGlassPaneBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
@@ -82,7 +81,7 @@ public class HighlightMemory {
         return false;
     }
 
-    public static boolean isTransparent(Level level, BlockState blockState, BlockPos pos, Direction dir) {
+    public static boolean isTransparent(Level level, BlockState blockState, BlockPos pos, Direction movingInDirection) {
         var block = blockState.getBlock();
         if (block == Blocks.AIR || block == Blocks.CAVE_AIR) return true;
         if (block == Blocks.WATER) return true;
@@ -92,7 +91,7 @@ public class HighlightMemory {
         if (block == Blocks.GLASS) return true;
         if (block == Blocks.GLASS_PANE) return true;
 
-        if (dir != null) return !(blockState.isFaceSturdy(level, pos, dir) || blockState.isFaceSturdy(level, pos, HighlightEmitterHelper.oppositeDir(dir)));
+        if (movingInDirection != null) return !(blockState.isFaceSturdy(level, pos, movingInDirection) || blockState.isFaceSturdy(level, pos, oppositeDir(movingInDirection)));
         return false;
     }
 
@@ -108,5 +107,16 @@ public class HighlightMemory {
         BlockState above = level.getBlockState(pos.above());
         BlockState above2 = level.getBlockState(pos.above(2));
         return above.isAir() && above2.isAir();
+    }
+
+    public static Direction oppositeDir(Direction dir) {
+        return switch (dir) {
+            case UP -> Direction.DOWN;
+            case DOWN -> Direction.UP;
+            case NORTH -> Direction.SOUTH;
+            case SOUTH -> Direction.NORTH;
+            case EAST -> Direction.WEST;
+            case WEST -> Direction.EAST;
+        };
     }
 }

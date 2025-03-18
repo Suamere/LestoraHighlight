@@ -1,8 +1,10 @@
-package com.lestora.highlight;
+package com.lestora.highlight.models;
+
+import com.lestora.highlight.helpers.HighlightEntry;
 
 import java.util.List;
 
-class LightEdges {
+public class LightEdges {
     public final List<HighlightEntry> LightLevel1;
     public final List<HighlightEntry> LightLevel0;
 

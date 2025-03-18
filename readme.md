@@ -16,7 +16,6 @@ The highlight mod is meant to highlight particular blocks.  It does this for two
 - Use the command `/lestora meldBoundaries [true/false]` Default true, set to false to show all boundaries of all torches.  It's not pretty, but good for debugging.
 - Use the command `/lestora lightSourceScanDistance <radius 5-100>` Default 41.  The distance around the player to scan for light sources for which to draw boundaries.
 - Use the command `/lestora clearHighlights` For debug, especially early in development.  Clears whole-block highlights like torch suggestions and spherical highlights.
-- 
 
 ## Compatibility
 - **Minecraft Version:** 1.21.4

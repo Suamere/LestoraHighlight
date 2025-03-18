@@ -1,5 +1,7 @@
-package com.lestora.highlight;
+package com.lestora.highlight.core;
 
+import com.lestora.highlight.helpers.HasTorchSupport;
+import com.lestora.highlight.models.AxisNode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -46,7 +48,7 @@ public class TorchBFS {
             if (dist > targetDistance) continue; // Do not expand further if past targetDistance.
 
             // Record any node that has support and is at least fallbackMin distance.
-            if (dist >= fallbackMin && hasSupport(level, node.pos)) {
+            if (dist >= fallbackMin && HasTorchSupport.hasSupport(level, node.pos)) {
                 // Determine branch key: the first move from start.
                 BlockPos branchKey = getBranchKey(node, start);
                 // For each branch, keep the candidate with the highest distance.
@@ -111,33 +113,5 @@ public class TorchBFS {
             current = current.parent;
         }
         return current.pos; // This is the immediate child of start.
-    }
-
-    /**
-     * Checks if the candidate position has support for a torch.
-     * Uses isFaceSturdy: the block below must be sturdy on its UP face,
-     * or one of the horizontal neighbors must be sturdy on its facing side.
-     *
-     * @param level The world Level.
-     * @param pos   The candidate BlockPos.
-     * @return true if support exists.
-     */
-    private static boolean hasSupport(Level level, BlockPos pos) {
-        if (level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) {
-            return true;
-        }
-        if (level.getBlockState(pos.north()).isFaceSturdy(level, pos.north(), Direction.SOUTH)) {
-            return true;
-        }
-        if (level.getBlockState(pos.south()).isFaceSturdy(level, pos.south(), Direction.NORTH)) {
-            return true;
-        }
-        if (level.getBlockState(pos.east()).isFaceSturdy(level, pos.east(), Direction.WEST)) {
-            return true;
-        }
-        if (level.getBlockState(pos.west()).isFaceSturdy(level, pos.west(), Direction.EAST)) {
-            return true;
-        }
-        return false;
     }
 }

@@ -1,4 +1,4 @@
-package com.lestora.highlight;
+package com.lestora.highlight.models;
 
 public class HighlightColor {
     final float red, green, blue, alpha;
@@ -8,7 +8,7 @@ public class HighlightColor {
     public float getBlue() { return blue; }
     public float getAlpha() { return alpha; }
 
-    HighlightColor(float red, float green, float blue, float alpha) {
+    public HighlightColor(float red, float green, float blue, float alpha) {
         this.red = red;
         this.green = green;
         this.blue = blue;

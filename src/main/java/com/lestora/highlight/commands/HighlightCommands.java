@@ -1,5 +1,10 @@
-package com.lestora.highlight;
+package com.lestora.highlight.commands;
 
+import com.lestora.highlight.core.HighlightEmitter;
+import com.lestora.highlight.events.HighlightEvents;
+import com.lestora.highlight.core.HighlightMemory;
+import com.lestora.highlight.core.HighlightSphere;
+import com.lestora.highlight.models.HighlightColor;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -27,24 +32,10 @@ public class HighlightCommands {
         registerTorchOn(root);
         registerLightRadius(root);
         registerShowAllOutlines(root);
-        //registerDebugTransparent(root);
         registerClearHighlights(root);
 
         event.getDispatcher().register(root);
     }
-
-//    private static void registerDebugTransparent(LiteralArgumentBuilder<CommandSourceStack> root) {
-//        root.then(Commands.literal("isTransparent")
-//                        .executes(context -> {
-//                            var player = Minecraft.getInstance().player;
-//                            var level = player.level();
-//                            var pos = player.blockPosition();
-//                            var state = level.getBlockState(pos);
-//                            System.err.println(pos + " isTransparent: " + HighlightMemory.isTransparent(level, state, pos, null));
-//                            return 1;
-//                        })
-//        );
-//    }
 
     private static void registerClearHighlights(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("clearHighlights")

@@ -87,6 +87,9 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 repositories {
     // Put repositories for dependencies here
     // ForgeGradle automatically adds the Forge maven and Maven Central for you
+    flatDir {
+        dirs 'libs'
+    }
 }
 
 configurations {
@@ -97,6 +100,7 @@ configurations {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor "org.spongepowered:mixin:0.8.7:processor"
+    implementation fg.deobf(files("libs/lestora_config-1.1.1.jar"))
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
     okHttpLib 'com.squareup.okhttp3:okhttp:4.10.0'
     implementation 'org.xerial:sqlite-jdbc:3.41.2.1'

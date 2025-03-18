@@ -1,9 +1,9 @@
 package com.lestora.highlight.mixin;
 
-import com.lestora.highlight.HighlightEntry;
-import com.lestora.highlight.HighlightFace;
-import com.lestora.highlight.HighlightMemory;
-import com.lestora.highlight.PointLocation;
+import com.lestora.highlight.helpers.HighlightEntry;
+import com.lestora.highlight.models.HighlightFace;
+import com.lestora.highlight.core.HighlightMemory;
+import com.lestora.highlight.models.PointLocation;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;

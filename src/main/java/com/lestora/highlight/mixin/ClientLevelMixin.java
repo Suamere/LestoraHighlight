@@ -1,7 +1,7 @@
 package com.lestora.highlight.mixin;
 
-import com.lestora.highlight.HighlightMemory;
-import com.lestora.highlight.HighlightSphere;
+import com.lestora.highlight.core.HighlightMemory;
+import com.lestora.highlight.core.HighlightSphere;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
