@@ -1,6 +1,7 @@
 package com.lestora.highlight.core;
 
 import com.lestora.config.LestoraConfig;
+import com.lestora.highlight.models.LightConfig;
 import com.lestora.highlight.models.LightPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -8,36 +9,26 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class LightSourceFinder {
-//    public static List<LightPos> findLightSourcesNearby(Level level, BlockPos playerPos, int distance) {
-//        List<LightPos> lightPositions;
-//        int radiusSq = distance * distance;
-//        lightPositions = new ArrayList<>();
-//        for (int dx = -distance; dx <= distance; dx++) {
-//            for (int dy = -distance; dy <= distance; dy++) {
-//                for (int dz = -distance; dz <= distance; dz++) {
-//                    if (dx * dx + dy * dy + dz * dz <= radiusSq) {
-//                        BlockPos pos = playerPos.offset(dx, dy, dz);
-//                        var blockState = level.getBlockState(pos);
-//                        for (var rlEntry : LestoraConfig.getLightLevels().entrySet()) {
-//                            if (blockSpecialReview(blockState, rlEntry.getKey())) {
-//                                lightPositions.add(new LightPos(pos, rlEntry.getValue()));
-//                                break;
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        return lightPositions;
-//    }
 
     public static List<LightPos> findLightSourcesNearby(Level level, BlockPos playerPos, int distance) {
         List<LightPos> lightPositions = new ArrayList<>();
         int radiusSq = distance * distance;
         Set<BlockPos> visited = new HashSet<>();
         Queue<BFSNode> queue = new LinkedList<>();
+
+        var configLights = LestoraConfig.getLightLevels().entrySet();
+        if (LightConfig.torchesOnly) {
+            configLights = configLights.stream()
+                    .filter(entry -> {
+                        var rl = entry.getKey().getResource();
+                        String id = rl.toString();  // e.g. "minecraft:torch"
+                        return id.equals("minecraft:torch") || id.equals("minecraft:lantern");
+                    })
+                    .collect(Collectors.toSet());
+        }
 
         // Start at player's position.
         queue.add(new BFSNode(playerPos));
@@ -49,9 +40,11 @@ public class LightSourceFinder {
 
             // Check if current block is a light source.
             BlockState state = level.getBlockState(currentPos);
-            for (var entry : LestoraConfig.getLightLevels().entrySet()) {
+            for (var entry : configLights) {
                 if (entry.getKey().stateMatches(state)) {
-                    lightPositions.add(new LightPos(currentPos, entry.getValue()));
+                    // Here we pass the resource identifier along with the light level.
+                    // Adjust the LightPos constructor accordingly.
+                    lightPositions.add(new LightPos(currentPos, entry.getValue(), entry.getKey().getResource()));
                     break;
                 }
             }
@@ -71,7 +64,6 @@ public class LightSourceFinder {
                     continue;
                 }
 
-                // Only consider neighbors within the sphere defined by distance.
                 int ndx = neighbor.getX() - playerPos.getX();
                 int ndy = neighbor.getY() - playerPos.getY();
                 int ndz = neighbor.getZ() - playerPos.getZ();
@@ -80,7 +72,7 @@ public class LightSourceFinder {
                 }
 
                 BlockState neighborState = level.getBlockState(neighbor);
-                // Use the moving direction as the one passed in.
+                // Use the moving direction as passed in.
                 if (HighlightMemory.isTransparent(level, neighborState, neighbor, dir)) {
                     visited.add(neighbor);
                     queue.add(new BFSNode(neighbor));
@@ -90,6 +82,7 @@ public class LightSourceFinder {
 
         return lightPositions;
     }
+
 
     private static class BFSNode {
         public final BlockPos pos;

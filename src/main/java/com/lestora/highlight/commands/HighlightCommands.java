@@ -62,6 +62,27 @@ public class HighlightCommands {
         );
     }
 
+    private static void registerTorchesOnly(LiteralArgumentBuilder<CommandSourceStack> root) {
+        root.then(Commands.literal("lights")
+                .then(Commands.literal("torchesOnly")
+                        // Default branch: omitted argument means true.
+                        .executes(context -> {
+                            LightConfig.torchesOnly = true;
+                            HighlightEmitter.processLights(Minecraft.getInstance().player);
+                            return 1;
+                        })
+                        // Optional argument branch.
+                        .then(Commands.argument("enabled", BoolArgumentType.bool())
+                                .executes(context -> {
+                                    LightConfig.torchesOnly = BoolArgumentType.getBool(context, "enabled");
+                                    HighlightEmitter.processLights(Minecraft.getInstance().player);
+                                    return 1;
+                                })
+                        )
+                )
+        );
+    }
+
     private static void registerStandLights(LiteralArgumentBuilder<CommandSourceStack> root) {
         root.then(Commands.literal("lights")
                 .then(Commands.literal("showWhenStanding")

@@ -1,5 +1,6 @@
 package com.lestora.highlight.events;
 
+import com.lestora.config.LestoraConfig;
 import com.lestora.highlight.core.HighlightEmitter;
 import com.lestora.highlight.core.HighlightMemory;
 import com.lestora.highlight.core.HighlightSphere;
@@ -7,7 +8,12 @@ import com.lestora.highlight.models.LightConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -29,21 +35,29 @@ import org.lwjgl.glfw.GLFW;
 public class HighlightEvents {
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private static final Map<UUID, BlockPos> lastPlayerPositions = new ConcurrentHashMap<>();
-    // Tick counter to measure 2-second intervals (2 seconds = 40 ticks at 20 ticks per second).
     private static int tickCounter = 0;
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
             tickCounter++;
-            // Every 40 ticks (about 2 seconds)
+            // Every update interval (e.g., LightConfig.updateSeconds * 20 ticks)
             if (tickCounter % (LightConfig.updateSeconds * 20) == 0) {
-                // Iterate over all server players
                 for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
                     BlockPos currentPos = player.blockPosition();
                     BlockPos lastPos = lastPlayerPositions.get(player.getUUID());
-                    // If the player's block position has changed since the last check...
-                    if (lastPos == null || !lastPos.equals(currentPos)) {
+                    boolean shouldProcess = false;
+                    if (lastPos == null) {
+                        shouldProcess = true;
+                    } else {
+                        int dx = Math.abs(currentPos.getX() - lastPos.getX());
+                        int dy = Math.abs(currentPos.getY() - lastPos.getY());
+                        int dz = Math.abs(currentPos.getZ() - lastPos.getZ());
+                        if (dx + dy + dz >= LightConfig.findLightRadius / 2) {
+                            shouldProcess = true;
+                        }
+                    }
+                    if (shouldProcess) {
                         lastPlayerPositions.put(player.getUUID(), currentPos);
                         HighlightEmitter.processLights(player);
                     }
@@ -54,33 +68,41 @@ public class HighlightEvents {
 
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        handleBlockChange((level, highlightConfig) -> {
+        handleBlockChange(event.getPlayer(), event.getState(), (level, highlightConfig) -> {
             highlightConfig.remove(event.getPos(), level);
         });
     }
 
     @SubscribeEvent
     public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
-        handleBlockChange((level, highlightConfig) -> {
+        handleBlockChange(event.getEntity(), event.getState(), (level, highlightConfig) -> {
             highlightConfig.add(event.getPos(), level);
         });
     }
 
-    private static void handleBlockChange(BiConsumer<Level, HighlightSphere> action) {
-        var level = Minecraft.getInstance().level;
-        if (level == null) return;
-        var player = Minecraft.getInstance().player;
-        if (player == null) return;
+    private static void handleBlockChange(Entity plyr, BlockState state, BiConsumer<Level, HighlightSphere> action) {
+        if (!(plyr instanceof Player player)) return;
+        var playerUUID = player.getUUID();
 
-        HighlightEmitter.processLights(player);
-        HighlightSphere config = HighlightSphere.getUserHighlightConfig(player.getUUID());
-        if (config == null || !HighlightMemory.hasHighlights()) return;
+        Block brokenBlock = state.getBlock();
+        var processLights =  state.canOcclude() || LestoraConfig.getLightLevels().keySet().stream()
+                .anyMatch(rlAmount -> rlAmount.getBlockType().equals(brokenBlock));
 
-        scheduler.schedule(() -> {
-            Minecraft.getInstance().execute(() -> action.accept(level, config));
-        }, 200, TimeUnit.MILLISECONDS);
+        HighlightSphere config = HighlightSphere.getUserHighlightConfig(playerUUID);
+        var processHighlights = !(config == null || !HighlightMemory.hasHighlights());
+
+        if (processLights || processHighlights) {
+            scheduler.schedule(() -> {
+                Minecraft.getInstance().execute(() -> {
+                    var innerPlayer = Minecraft.getInstance().level.getPlayerByUUID(playerUUID);
+                    if (processLights) HighlightEmitter.processLights(innerPlayer);
+                    if (processHighlights) action.accept(Minecraft.getInstance().level, config);
+                });
+            }, 200, TimeUnit.MILLISECONDS);
+        }
     }
 
+    public static boolean isPlayerCrouchingKeyDown = false;
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
         if (event.getKey() == Minecraft.getInstance().options.keyShift.getKey().getValue()) {
@@ -90,22 +112,22 @@ public class HighlightEvents {
             var isChanged = false;
 
             if (toggle && isDown) {
-                LightConfig.isPlayerCrouchingKeyDown = !LightConfig.isPlayerCrouchingKeyDown;
+                isPlayerCrouchingKeyDown = !isPlayerCrouchingKeyDown;
                 isChanged = true;
             }
             else if (!toggle) {
-                if (isDown && !LightConfig.isPlayerCrouchingKeyDown) {
-                    LightConfig.isPlayerCrouchingKeyDown = true;
+                if (isDown && !isPlayerCrouchingKeyDown) {
+                    isPlayerCrouchingKeyDown = true;
                     isChanged = true;
-                } else if (isUp && LightConfig.isPlayerCrouchingKeyDown) {
-                    LightConfig.isPlayerCrouchingKeyDown = false;
+                } else if (isUp && isPlayerCrouchingKeyDown) {
+                    isPlayerCrouchingKeyDown = false;
                     isChanged = true;
                 }
             }
             if (isChanged) {
                 scheduler.schedule(() -> {
                     Minecraft.getInstance().execute(() -> {
-                        HighlightEmitter.processLights(Minecraft.getInstance().player);
+                        HighlightEmitter.processLights(Minecraft.getInstance().player, true);
                     });
                 }, 100, TimeUnit.MILLISECONDS);
             }
