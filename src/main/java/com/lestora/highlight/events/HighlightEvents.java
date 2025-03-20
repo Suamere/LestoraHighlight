@@ -38,30 +38,35 @@ public class HighlightEvents {
     private static int tickCounter = 0;
 
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            tickCounter++;
-            // Every update interval (e.g., LightConfig.updateSeconds * 20 ticks)
-            if (tickCounter % (LightConfig.updateSeconds * 20) == 0) {
-                for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
-                    BlockPos currentPos = player.blockPosition();
-                    BlockPos lastPos = lastPlayerPositions.get(player.getUUID());
-                    boolean shouldProcess = false;
-                    if (lastPos == null) {
-                        shouldProcess = true;
-                    } else {
-                        int dx = Math.abs(currentPos.getX() - lastPos.getX());
-                        int dy = Math.abs(currentPos.getY() - lastPos.getY());
-                        int dz = Math.abs(currentPos.getZ() - lastPos.getZ());
-                        if (dx + dy + dz >= LightConfig.findLightRadius / 2) {
-                            shouldProcess = true;
-                        }
-                    }
-                    if (shouldProcess) {
-                        lastPlayerPositions.put(player.getUUID(), currentPos);
-                        HighlightEmitter.processLights(player);
-                    }
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        // Only process on END phase.
+        if (event.phase != TickEvent.Phase.END) return;
+
+        tickCounter++;
+        // Check every update interval (e.g., LightConfig.updateSeconds * 20 ticks).
+        if (tickCounter % (LightConfig.updateSeconds * 20) == 0) {
+            Player player = Minecraft.getInstance().player;
+            if (player == null) return; // Safety check if no player is present.
+
+            BlockPos currentPos = player.blockPosition();
+            BlockPos lastPos = lastPlayerPositions.get(player.getUUID());
+            boolean shouldProcess = false;
+
+            if (lastPos == null) {
+                shouldProcess = true;
+            } else {
+                int dx = Math.abs(currentPos.getX() - lastPos.getX());
+                int dy = Math.abs(currentPos.getY() - lastPos.getY());
+                int dz = Math.abs(currentPos.getZ() - lastPos.getZ());
+                // Process if the Manhattan distance is at least half the configured find-light radius.
+                if (dx + dy + dz >= LightConfig.findLightRadius / 2) {
+                    shouldProcess = true;
                 }
+            }
+
+            if (shouldProcess) {
+                lastPlayerPositions.put(player.getUUID(), currentPos);
+                HighlightEmitter.processLights(player);
             }
         }
     }
